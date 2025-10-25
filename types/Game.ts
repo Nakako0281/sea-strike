@@ -39,6 +39,13 @@ export type AttackResult = {
   shipName?: string;
 };
 
+export type GameHistoryEntry = {
+  turn: number;
+  attacker: Turn;
+  target: Position;
+  result: 'hit' | 'miss' | 'sunk';
+};
+
 export type GameState = {
   mode: 'cpu';
   phase: GamePhase;
@@ -50,7 +57,8 @@ export type GameState = {
   opponentBoard: Board;
   playerShips: Ship[];
   opponentShips: Ship[];
-  gameHistory: AttackResult[];
+  gameHistory: GameHistoryEntry[];
+  winner?: Turn;
 };
 
 export type Character = {
