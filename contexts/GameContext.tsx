@@ -4,7 +4,6 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { createEmptyBoard, randomPlacement } from '@/lib/game/board';
 import { getTeamCharacters } from '@/lib/game/characters';
 import { attack, checkWinner, getUnattackedCells } from '@/lib/game/combat';
-import { getNextAttacker } from '@/lib/game/turn';
 import {
   initializeSkillStates,
   markSkillAsUsed,
@@ -14,6 +13,7 @@ import {
 } from '@/lib/game/skillExecutor';
 import { getSkillById } from '@/lib/game/skills';
 import type { GameState, Team, Board, Ship, GamePhase, Position, AttackResult } from '@/types';
+import { cpuThinkEasy } from '@/lib/game/ai';
 
 type GameContextType = {
   gameState: GameState | null;
