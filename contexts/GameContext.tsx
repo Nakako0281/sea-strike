@@ -5,6 +5,14 @@ import { createEmptyBoard, randomPlacement } from '@/lib/game/board';
 import { getTeamCharacters } from '@/lib/game/characters';
 import { attack, checkWinner, getUnattackedCells } from '@/lib/game/combat';
 import { getNextAttacker } from '@/lib/game/turn';
+import {
+  initializeSkillStates,
+  markSkillAsUsed,
+  updateSkillAvailability,
+  canUseSkill as checkCanUseSkill,
+  executeSkill,
+} from '@/lib/game/skillExecutor';
+import { getSkillById } from '@/lib/game/skills';
 import type { GameState, Team, Board, Ship, GamePhase, Position, AttackResult } from '@/types';
 
 type GameContextType = {
@@ -16,6 +24,8 @@ type GameContextType = {
   resetGame: () => void;
   attackCell: (position: Position) => AttackResult | null;
   cpuTurn: () => void;
+  useSkill: (skillId: string, position: Position, direction?: 'horizontal' | 'vertical') => boolean;
+  canUseSkill: (skillId: string) => boolean;
 };
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -41,6 +51,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       playerShips: [],
       opponentShips,
       gameHistory: [],
+      playerSkillStates: [],
+      opponentSkillStates: initializeSkillStates(opponentShips),
     });
   };
 
@@ -52,6 +64,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       ...gameState,
       playerBoard: board,
       playerShips: ships,
+      playerSkillStates: initializeSkillStates(ships),
     });
   };
 
@@ -66,6 +79,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       ...gameState,
       playerBoard: board,
       playerShips: ships,
+      playerSkillStates: initializeSkillStates(ships),
     });
   };
 
@@ -114,10 +128,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
     const wasHit = attackResult.type === 'hit' || attackResult.type === 'sunk';
     const nextTurn = wasHit ? 'player' : 'opponent';
 
+    // スキル可否状態を更新
+    const updatedOpponentSkillStates = updateSkillAvailability(
+      gameState.opponentSkillStates,
+      updatedShips
+    );
+
     setGameState({
       ...gameState,
       opponentBoard: updatedBoard,
       opponentShips: updatedShips,
+      opponentSkillStates: updatedOpponentSkillStates,
       gameHistory: newHistory,
       currentTurn: nextTurn,
       turnCount: gameState.turnCount + 1,
@@ -165,16 +186,101 @@ export function GameProvider({ children }: { children: ReactNode }) {
     const wasHit = attackResult.type === 'hit' || attackResult.type === 'sunk';
     const nextTurn = wasHit ? 'opponent' : 'player';
 
+    // スキル可否状態を更新
+    const updatedPlayerSkillStates = updateSkillAvailability(
+      gameState.playerSkillStates,
+      updatedShips
+    );
+
     setGameState({
       ...gameState,
       playerBoard: updatedBoard,
       playerShips: updatedShips,
+      playerSkillStates: updatedPlayerSkillStates,
       gameHistory: newHistory,
       currentTurn: nextTurn,
       turnCount: gameState.turnCount + 1,
       phase: newPhase,
       winner: isPlayerDefeated ? 'opponent' : undefined,
     });
+  };
+
+  // スキル使用
+  const useSkill = (
+    skillId: string,
+    position: Position,
+    direction?: 'horizontal' | 'vertical'
+  ): boolean => {
+    if (!gameState || gameState.phase !== 'battle' || gameState.currentTurn !== 'player') {
+      return false;
+    }
+
+    // スキル使用可能チェック
+    if (!checkCanUseSkill(gameState.playerSkillStates, skillId)) {
+      return false;
+    }
+
+    const skill = getSkillById(skillId);
+    if (!skill) return false;
+
+    // スキル実行
+    const skillResult = executeSkill(
+      skill,
+      position,
+      gameState.opponentBoard,
+      gameState.opponentShips,
+      direction
+    );
+
+    const { results, updatedBoard, updatedShips } = skillResult;
+
+    // ゲーム履歴に追加（スキル使用の記録）
+    const newHistory = [
+      ...gameState.gameHistory,
+      ...results.map((r, index) => ({
+        turn: gameState.turnCount + 1 + index,
+        attacker: 'player' as const,
+        target: r.position,
+        result: r.type,
+      })),
+    ];
+
+    // 勝敗判定
+    const isOpponentDefeated = checkWinner(updatedShips);
+    const newPhase: GamePhase = isOpponentDefeated ? 'finished' : 'battle';
+
+    // スキル使用後は必ずターン交代
+    const nextTurn = 'opponent';
+
+    // スキルを使用済みにする
+    const updatedPlayerSkillStates = markSkillAsUsed(gameState.playerSkillStates, skillId);
+    const updatedOpponentSkillStates = updateSkillAvailability(
+      gameState.opponentSkillStates,
+      updatedShips
+    );
+
+    setGameState({
+      ...gameState,
+      opponentBoard: updatedBoard,
+      opponentShips: updatedShips,
+      playerSkillStates: updatedPlayerSkillStates,
+      opponentSkillStates: updatedOpponentSkillStates,
+      gameHistory: newHistory,
+      currentTurn: nextTurn,
+      turnCount: gameState.turnCount + results.length,
+      phase: newPhase,
+      winner: isOpponentDefeated ? 'player' : undefined,
+    });
+
+    return true;
+  };
+
+  // スキルが使用可能かチェック
+  const canUseSkill = (skillId: string): boolean => {
+    if (!gameState || gameState.phase !== 'battle' || gameState.currentTurn !== 'player') {
+      return false;
+    }
+    return checkCanUseSkill(gameState.playerSkillStates, skillId);
   };
 
   const value: GameContextType = {
@@ -186,6 +292,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
     resetGame,
     attackCell,
     cpuTurn,
+    useSkill,
+    canUseSkill,
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

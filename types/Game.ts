@@ -1,5 +1,7 @@
 // ゲーム関連の型定義
 
+import type { CharacterSkillState } from './Skill';
+
 export type Position = {
   x: number;
   y: number;
@@ -59,6 +61,8 @@ export type GameState = {
   opponentShips: Ship[];
   gameHistory: GameHistoryEntry[];
   winner?: Turn;
+  playerSkillStates: CharacterSkillState[];
+  opponentSkillStates: CharacterSkillState[];
 };
 
 export type Character = {
