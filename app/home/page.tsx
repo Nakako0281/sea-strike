@@ -58,7 +58,7 @@ export default function HomePage() {
 
             <div className="space-y-4">
               <button
-                onClick={() => router.push('/game/setup')}
+                onClick={() => router.push('/game/team-select')}
                 className="w-full bg-blue-500 text-white py-4 px-6 rounded-lg hover:bg-blue-600 transition text-lg font-semibold shadow-md"
               >
                 🤖 CPU対戦
