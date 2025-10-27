@@ -10,7 +10,7 @@ export default function TeamSelectPage() {
 
   const handleTeamSelect = (team: Team) => {
     startGame(team);
-    router.push('/game/setup');
+    router.push('/game/skill-select');
   };
 
   return (

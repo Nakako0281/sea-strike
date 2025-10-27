@@ -17,6 +17,8 @@ import { cpuThinkEasy } from '@/lib/game/ai';
 
 type GameContextType = {
   gameState: GameState | null;
+  selectedSkills: string[];
+  setSelectedSkills: (skillIds: string[]) => void;
   startGame: (playerTeam: Team) => void;
   setPlayerBoard: (board: Board, ships: Ship[]) => void;
   randomPlaceShips: () => void;
@@ -32,6 +34,7 @@ const GameContext = createContext<GameContextType | undefined>(undefined);
 
 export function GameProvider({ children }: { children: ReactNode }) {
   const [gameState, setGameState] = useState<GameState | null>(null);
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
 
   // ゲーム開始
   const startGame = (playerTeam: Team) => {
@@ -95,6 +98,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   // ゲームリセット
   const resetGame = () => {
+    setSelectedSkills([]);
     setGameState(null);
   };
 
@@ -284,6 +288,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
   };
 
   const value: GameContextType = {
+    selectedSkills,
+    setSelectedSkills,
     gameState,
     startGame,
     setPlayerBoard,
