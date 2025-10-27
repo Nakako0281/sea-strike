@@ -30,7 +30,7 @@ export default function SkillSelectPage() {
 
   const handleConfirm = () => {
     setSelectedSkills(localSelected);
-    router.push('/game/placement');
+    router.push('/game/setup');
   };
 
   const canConfirm = localSelected.length === MAX_SKILLS;

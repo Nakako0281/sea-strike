@@ -107,7 +107,7 @@ describe('SkillSelectPage', () => {
     fireEvent.click(confirmButton);
 
     expect(mockSetSelectedSkills).toHaveBeenCalled();
-    expect(mockPush).toHaveBeenCalledWith('/game/placement');
+    expect(mockPush).toHaveBeenCalledWith('/game/setup');
   });
 
   it('allows deselecting skills', () => {
