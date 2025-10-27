@@ -133,3 +133,13 @@ export function canUseSkill(
   if (!state) return false;
   return state.isAvailable && !state.isUsed;
 }
+
+/**
+ * 選択されたスキルのみにフィルタリング
+ */
+export function filterSelectedSkills(
+  skillStates: CharacterSkillState[],
+  selectedSkillIds: string[]
+): CharacterSkillState[] {
+  return skillStates.filter((state) => selectedSkillIds.includes(state.skillId));
+}

@@ -10,6 +10,7 @@ import {
   updateSkillAvailability,
   canUseSkill as checkCanUseSkill,
   executeSkill,
+  filterSelectedSkills,
 } from '@/lib/game/skillExecutor';
 import { getSkillById } from '@/lib/game/skills';
 import type { GameState, Team, Board, Ship, GamePhase, Position, AttackResult } from '@/types';
@@ -28,6 +29,7 @@ type GameContextType = {
   cpuTurn: () => void;
   useSkill: (skillId: string, position: Position, direction?: 'horizontal' | 'vertical') => boolean;
   canUseSkill: (skillId: string) => boolean;
+  getAvailableSkills: () => import('@/lib/game/skillExecutor').CharacterSkillState[];
 };
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -286,8 +288,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
     return checkCanUseSkill(gameState.playerSkillStates, skillId);
   };
+  // 選択されたスキルのみを取得
+  const getAvailableSkills = () => {
+    if (!gameState) return [];
+    return filterSelectedSkills(gameState.playerSkillStates, selectedSkills);
+  };
 
-  const value: GameContextType = {
+    const value: GameContextType = {
+    getAvailableSkills,
     selectedSkills,
     setSelectedSkills,
     gameState,
